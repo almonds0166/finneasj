@@ -1,2 +1,2 @@
 # finneasj
-*squeak*
+Discord bot to be ran on Heroku
