@@ -94,6 +94,6 @@ async def on_ready():
 #
 
 print("Logging in...")
-client.run(os.environ["MOUSE_ENVIRON"], bot=True)
+client.run(os.environ["MOUSE_TOKEN"], bot=True)
 
 print("Logged out.")
