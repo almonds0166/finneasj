@@ -137,7 +137,7 @@ async def search_subject(query):
 MIT_LANDMARKS = ["great dome", "the dome", "killian", "walker", "senior house",
    "baker", "hayden", "chapel", "kresge", "dupont", "mccormick", "east campus",
    "dreyfus", "burton connor", "simmon", "jonhson", "z center", "z-center",
-   "athletic center", "stata", "mit.nano", "lobby", "cafe"]
+   "athletic center", "stata", "mit.nano", "lobby", "cafe", "house"]
 
 async def mit_search(query):
    if "[j]" in query.lower(): return await search_subject(query)
