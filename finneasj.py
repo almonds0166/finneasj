@@ -12,7 +12,9 @@ MOUSE_PREFIX = "."
 
 MOUSE_HELP = """
 Commands: `{pre}mit`, `{pre}help`
-More about me 🐭: {url}
+More about me 🐭: <{url}>
+How I work: <https://www.youtube.com/watch?v=25LYVxTUZhM>
+<https://github.com/almonds0166/finneasj>
 """
 
 MOUSE_URL = "https://thirdwest.scripts.mit.edu/~thirdwest/wiki/index.php?title=User:Finneasj"
