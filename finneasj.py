@@ -162,7 +162,7 @@ async def search_map(query):
    else:
       j = result[0]
       content = ""
-      embed.description = "at {street} (`{lat_wgs84},{long_wgs84}`)".format(**j)
+      embed.description = "Building {bldgnum}\nat {street} (`{lat_wgs84},{long_wgs84}`)".format(**j)
       embed.title = j["name"]
       embed.set_image(url=j["bldgimg"])
    return content, embed, len(result) == 1
