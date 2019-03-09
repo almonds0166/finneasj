@@ -2,4 +2,4 @@
 
 Discord bot that can retrieve information about MIT courses and locations.
 
-![example2](example2.png "Example")
+![for example](https://i.imgur.com/96anpD7.png "Example")
