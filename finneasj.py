@@ -29,7 +29,7 @@ Units: {units}
 {else}
 """
 
-LOCATION_DETAILS = "{name} (at {street})"
+LOCATION_DETAILS = "{name} ({bldgnum}, at {street})"
 
 MOUSE_NO_RESULTS = "I couldn't find any results for either subjects or for locations!"
 
@@ -162,7 +162,7 @@ async def search_map(query):
    else:
       j = result[0]
       content = ""
-      embed.description = "Building {bldgnum}\nat {street} (`{lat_wgs84},{long_wgs84}`)".format(**j)
+      embed.description = "Building {bldgnum}\n{street} (`{lat_wgs84},{long_wgs84}`)".format(**j)
       embed.title = j["name"]
       embed.set_image(url=j["bldgimg"])
    return content, embed, len(result) == 1
