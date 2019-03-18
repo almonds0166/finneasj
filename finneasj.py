@@ -31,7 +31,7 @@ Units: {units}
 
 LOCATION_DETAILS = "{name} ({bldgnum}, at {street})"
 
-MOUSE_NO_RESULTS = "I couldn't find any results for either subjects or for locations!"
+MOUSE_NO_RESULTS = "I couldn't find any results either for subjects or for locations!"
 
 LEVELS = {
    "Undergrad": "🇺",
