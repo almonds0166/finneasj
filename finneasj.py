@@ -11,7 +11,8 @@ from bs4 import BeautifulSoup
 MOUSE_PREFIX = "."
 
 MOUSE_HELP = """
-Commands: `{pre}mit`, `{pre}help`
+Commands: `{pre}mit`, `{pre}help`, `{pre}ixa`
+Ask almonds for specific help
 More about me 🐭: <{url}>
 How I work: <https://www.youtube.com/watch?v=25LYVxTUZhM>
 <https://github.com/almonds0166/finneasj>
@@ -54,6 +55,22 @@ OTHER_ICONS = {
    "______": "🤔"
 }
 EMOJIS = {**LEVELS, **SEASONS, **OTHER_ICONS}
+
+# Musicazoo
+
+HEADERS = {"Content-Type": "application/json", "User-Agent": "finneasj/0.0"}
+
+GET_QUEUE = {"cmd": "queue",
+   "args": {
+      "parameters": {
+         "youtube": ["title", "duration"],
+         "text": ["text"] }}}
+
+POST_YT = {"cmd": "add",
+   "args": {
+      "type": "youtube",
+      "args": {
+         "url": ""}}}
 
 def cap_at_2000(items):
    temp = "\n".join(items)
@@ -207,6 +224,20 @@ async def on_message(msg):
    elif cmd == "help":
       await client.send_message(msg.channel,
          MOUSE_HELP.format(pre=MOUSE_PREFIX, url=MOUSE_URL))
+      
+   elif cmd == "ixa":
+      # Work in progress
+      if not args:
+         json = GET_QUEUE
+      else:
+         POST_YT["args"]["args"]["url"] = " ".join(args).strip("<>")
+         json = POST_YT
+      async with aiohttp.ClientSession() as session:
+         async with session.post(os.environ["MUSICAZOO_ENDPOINT"],
+                                 json=json, headers=HEADERS) as response:
+            result = await response.text()
+      await client.send_message(msg.channel,
+         "```\n" + result + "\n```")
 
 @client.event
 async def on_error(event, *args, **kwargs):
