@@ -234,7 +234,7 @@ async def on_message(msg):
          json = POST_YT
       async with aiohttp.ClientSession() as session:
          async with session.post(os.environ["MUSICAZOO_ENDPOINT"],
-                                 json=json, headers=HEADERS) as response:
+                                 data=json, headers=HEADERS) as response:
             result = await response.text()
       await client.send_message(msg.channel,
          "```\n" + result + "\n```")
