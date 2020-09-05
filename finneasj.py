@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 MOUSE_PREFIX = "."
 
 MOUSE_HELP = """
-Commands: `{pre}mit`, `{pre}help`, `{pre}ixa`
+Commands: `{pre}mit`, `{pre}help`
 Ask almonds for specific help
 More about me 🐭: <{url}>
 How I work: <https://www.youtube.com/watch?v=25LYVxTUZhM>
@@ -188,7 +188,7 @@ async def search_map(query):
 
 async def get_previous_message(msg):
    # returns the message clean_content, not the message object itself
-   logs = client.logs_from(msg.channel, limit=10, reverse=True)
+   logs = msg.channel.history(limit=10, reverse=True)
    messages = []
    async for message in logs:
       messages.append(message)
