@@ -1,5 +1,5 @@
-aiohttp==1.0.5
-discord.py==0.16.12
-discord==0.16.12
+aiohttp==3.6.2
 beautifulsoup4==4.6.3
 html5lib==1.0.1
+discord.py==1.4.1
+discord==1.0.1

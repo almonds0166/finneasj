@@ -27,6 +27,7 @@ SUBJECT_DETAILS = """
 {level} ({when}) {other_icons}
 Prereq: {prereq}
 Units: {units}
+Lecture: {lecture}
 {else}
 """
 
@@ -144,8 +145,9 @@ async def search_catalog(query):
       embed.title = soup.body.h3.get_text(strip=True)
       embed.url   = url
       kwargs = {"when": [], "other_icons": [], "else": ""}
-      kwargs["prereq"] = cut(soup.body.blockquote.get_text(), "Prereq: ", "\n")
-      kwargs["units"]  = cut(soup.body.blockquote.get_text(),  "Units: ", "\n")
+      kwargs["prereq"]  = cut(soup.body.blockquote.get_text(),  "Prereq: ", "\n")
+      kwargs["units"]   = cut(soup.body.blockquote.get_text(),   "Units: ", "\n")
+      kwargs["lecture"] = cut(soup.body.blockquote.get_text(), "Lecture: ", "\n")
       alts = [img["alt"] for img in soup.body.blockquote.find_all("img") if not img["alt"] == "______"]
       for alt in alts:
          if alt in LEVELS:
@@ -206,46 +208,46 @@ async def on_message(msg):
       c = await search_catalog(arg)
       # exactly one result for subjects
       if c[2]:
-         await client.send_message(msg.channel, c[0], embed=c[1])
+         await msg.channel.send(c[0], embed=c[1])
          return
       m = await search_map(arg)
       # exactly one result for locations
       if m[2]:
-         await client.send_message(msg.channel, embed=m[1])
+         await msg.channel.send("", embed=m[1])
          return
       # No results at all
       if not any(c) and not any(m):
-         await client.send_message(msg.channel, MOUSE_NO_RESULTS)
+         await msg.channel.send(MOUSE_NO_RESULTS)
          return
       # Send both results
-      if any(c): await client.send_message(msg.channel, c[0], embed=c[1])
-      if any(m): await client.send_message(msg.channel, m[0], embed=m[1])
+      if any(c): await msg.channel.send(c[0], embed=c[1])
+      if any(m): await msg.channel.send(m[0], embed=m[1])
 
    elif cmd == "help":
-      await client.send_message(msg.channel,
+      await msg.channel.send(
          MOUSE_HELP.format(pre=MOUSE_PREFIX, url=MOUSE_URL))
       
-   elif cmd == "ixa":
-      # Work in progress
-      if not args:
-         json = GET_QUEUE
-      else:
-         POST_YT["args"]["args"]["url"] = " ".join(args).strip("<>")
-         json = POST_YT
-      async with aiohttp.ClientSession() as session:
-         async with session.post(os.environ["MUSICAZOO_ENDPOINT"],
-                                 data=json, headers=HEADERS) as response:
-            result = await response.text()
-      await client.send_message(msg.channel,
-         "```\n" + result + "\n```")
+   # elif cmd == "ixa":
+   #    # Work in progress
+   #    if not args:
+   #       json = GET_QUEUE
+   #    else:
+   #       POST_YT["args"]["args"]["url"] = " ".join(args).strip("<>")
+   #       json = POST_YT
+   #    async with aiohttp.ClientSession() as session:
+   #       async with session.post(os.environ["MUSICAZOO_ENDPOINT"],
+   #                               data=json, headers=HEADERS) as response:
+   #          result = await response.text()
+   #    await msg.channel.send(
+   #       "```\n" + result + "\n```")
 
 @client.event
 async def on_error(event, *args, **kwargs):
    error = traceback.format_exc()
-   error_channel = client.get_channel(os.environ["ERROR_CHANNEL"])
+   error_channel = client.get_channel(int(os.environ["ERROR_CHANNEL"]))
    embed = discord.Embed()
    embed.description = "event: {}\nargs: {}\nkwargs: {}".format(event, args, kwargs)
-   await client.send_message(error_channel,
+   await error_channel.send(
       "```\n" + error + "\n```", embed=embed)
 
 @client.event
