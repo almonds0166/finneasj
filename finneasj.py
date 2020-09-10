@@ -180,6 +180,7 @@ async def search_map(query):
       content = cap_at_2000(locations)
    else:
       j = result[0]
+      content = ""
       embed.description = "{street} (`{lat_wgs84},{long_wgs84}`)".format(**j)
       if "bldgnum" in j:
          embed.description = "Building {bldgnum}\n".format(**j) + embed.description
