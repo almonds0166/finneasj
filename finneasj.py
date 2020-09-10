@@ -181,9 +181,9 @@ async def search_map(query):
    else:
       j = result[0]
       content = ""
-      embed.description = "{street} (`{lat_wgs84},{long_wgs84}`)".format(**j)
-      if "bldgnum" in j:
-         embed.description = "Building {bldgnum}\n".format(**j) + embed.description
+      embed.description = "(`{lat_wgs84},{long_wgs84}`)".format(**j)
+      if "bldgnum" in j and "street" in j:
+         embed.description = "Building {bldgnum}\n{street} ".format(**j) + embed.description
       embed.title = j["name"]
       embed.set_image(url=j["bldgimg"])
    return content, embed, len(result) == 1
