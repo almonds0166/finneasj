@@ -176,7 +176,10 @@ async def search_map(query):
       embed.title = "Found {} results for location!".format(len(result))
       locations = []
       for j in result:
-         locations.append(LOCATION_DETAILS.format(**j))
+         if "bldgnum" in j and "street" in j:
+            locations.append(LOCATION_DETAILS.format(**j))
+         else:
+            locations.append(j["name"])
       content = cap_at_2000(locations)
    else:
       j = result[0]
