@@ -185,7 +185,7 @@ async def search_map(query):
       if "bldgnum" in j and "street" in j:
          embed.description = "Building {bldgnum}\n{street} ".format(**j) + embed.description
       embed.title = j["name"]
-      embed.set_image(url=j["bldgimg"])
+      if "bldgimg" in j: embed.set_image(url=j["bldgimg"])
    return content, embed, len(result) == 1
 
 async def get_previous_message(msg):
