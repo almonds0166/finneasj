@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 MOUSE_PREFIX = "."
 
 MOUSE_HELP = """
-Commands: `{pre}mit`, `{pre}help`
+Commands: `{pre}mit` for help, `.mit [place]`, `.mit [class]`
 Ask almonds for specific help
 More about me 🐭: <{url}>
 How I work: <https://www.youtube.com/watch?v=25LYVxTUZhM>
@@ -191,16 +191,6 @@ async def search_map(query):
       if "bldgimg" in j: embed.set_image(url=j["bldgimg"])
    return content, embed, len(result) == 1
 
-async def get_previous_message(msg):
-   # returns the message clean_content, not the message object itself
-   logs = msg.channel.history(limit=10, reverse=True)
-   messages = []
-   async for message in logs:
-      messages.append(message)
-   for m in sorted(messages, reverse=True, key=lambda m: m.timestamp):
-      if m.timestamp < msg.timestamp: return m.clean_content
-   return ""
-
 client = discord.Client()
 
 @client.event
@@ -209,7 +199,12 @@ async def on_message(msg):
    
    cmd, *args = msg.clean_content[len(MOUSE_PREFIX) :].split(" ")
    if cmd == "mit":
-      arg = " ".join(args) if args else await get_previous_message(msg)
+      if not args:
+         await msg.channel.send(
+            MOUSE_HELP.format(pre=MOUSE_PREFIX, url=MOUSE_URL))
+         return
+
+      arg = " ".join(args)
       c = await search_catalog(arg)
       # exactly one result for subjects
       if c[2]:
@@ -227,10 +222,6 @@ async def on_message(msg):
       # Send both results
       if any(c): await msg.channel.send(c[0], embed=c[1])
       if any(m): await msg.channel.send(m[0], embed=m[1])
-
-   elif cmd == "help":
-      await msg.channel.send(
-         MOUSE_HELP.format(pre=MOUSE_PREFIX, url=MOUSE_URL))
       
    # elif cmd == "ixa":
    #    # Work in progress
