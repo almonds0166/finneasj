@@ -8,249 +8,79 @@ import aiohttp
 import json
 from bs4 import BeautifulSoup
 
-MOUSE_PREFIX = "."
+from squeak import catalog, whereis
 
-MOUSE_HELP = """
-Commands: `{pre}mit` for help, `.mit [place]`, `.mit [class]`
-Ask almonds for specific help
-More about me 🐭: <{url}>
-How I work: <https://www.youtube.com/watch?v=25LYVxTUZhM>
-<https://github.com/almonds0166/finneasj>
-"""
+MOUSE_PREFIX = os.environ.get("MOUSE_PREFIX", ".")
 
-MOUSE_URL = "https://thirdwest.scripts.mit.edu/~thirdwest/wiki/index.php?title=User:Finneasj"
+MOUSE_HELP = discord.Embed()
+MOUSE_HELP.title = "Commands"
+MOUSE_HELP.description = (
+   "`{pre}mit` for help\n"
+   "`{pre}mit [class]` to search the catalog\n"
+   "`{pre}map [place]` to search the map"
+).format(pre=MOUSE_PREFIX)
+MOUSE_HELP.add_field(
+   name="Code",
+   value="[almonds0166/finneasj](https://github.com/almonds0166/finneasj)"
+)
+MOUSE_HELP.add_field(
+   name="Other",
+   value=(
+      "[🔬 How I work](https://youtu.be/25LYVxTUZhM)\n"
+      "[🐭 More about me](https://thirdwest.scripts.mit.edu/~thirdwest/wiki/index.php?title=User:Finneasj)\n"
+      "`almonds` for help/feedback\n"
+      "[Slash commands](https://blog.discord.com/slash-commands-are-here-8db0a385d9e6) coming Soon..!"
+   )
+)
 
-CATALOG_URL = "http://student.mit.edu/catalog/search.cgi?style=verbatim&when=*&termleng=4&days_offered=*&start_time=*&duration=*&total_units=*&search="
-MAP_URL = "https://whereis.mit.edu/search?type=query&output=json&q="
-
-SUBJECT_DETAILS = """
-{level} ({when}) {other_icons}
-Prereq: {prereq}
-Units: {units}
-Lecture: {lecture}
-{else}
-"""
-
-LOCATION_DETAILS = "{name} ({bldgnum}, at {street})"
-
-MOUSE_NO_RESULTS = "I couldn't find any results either for subjects or for locations!"
-
-LEVELS = {
-   "Undergrad": "🇺",
-   "Graduate":  "🇬"
-}
-SEASONS = {
-   "Fall": "🍁",
-   "Spring": "🌷",
-   "IAP": "❄️",
-   "Summer": "🌞"
-}
-OTHER_ICONS = {
-   "Can be repeated for credit": "🔄",
-   "Institute Lab": "🔬",
-   "Rest Elec in Sci & Tech": "🇷",
-   "HASS Social Sciences": "🇸",
-   "HASS Arts": "🇦",
-   "HASS Humanities": "🇭",
-   "Communication Intensive HASS": "(CI-H)",
-   "______": "🤔"
-}
-EMOJIS = {**LEVELS, **SEASONS, **OTHER_ICONS}
-
-# Musicazoo
-
-HEADERS = {"Content-Type": "application/json", "User-Agent": "finneasj/0.0"}
-
-GET_QUEUE = {"cmd": "queue",
-   "args": {
-      "parameters": {
-         "youtube": ["title", "duration"],
-         "text": ["text"] }}}
-
-POST_YT = {"cmd": "add",
-   "args": {
-      "type": "youtube",
-      "args": {
-         "url": ""}}}
-
-def cap_at_2000(items):
-   temp = "\n".join(items)
-   while len(temp) > 2000:
-      del items[-1]
-      temp = "\n".join(items) + "\n..."
-   return temp
-
-def url_encode(param):
-   temp = ""
-   for c in param:
-      n = ord(c)
-      if n == 32:
-         temp += "+"
-      elif c in "eitsanhurdmwgvlfbkopxczjyqEITSANHURDMWGVLFBKOPXCZJYQ0123456789-_.~":
-         temp += c
-      elif n > 32:
-         temp += "%" + hex(n)[2:].upper()
-   return temp
-
-def html_to_markdown(string_):
-   out = string_.replace("\n", "")
-   out = out.replace("<br/>", "\n")
-   out = out.replace("<i>", "*")
-   out = out.replace("</i>", "*")
-   out = out.replace("<b>", "**")
-   out = out.replace("</b>", "**")
-   return out.strip("\n ")
-
-def find_end(string_, sub):
-   i = string_.find(sub)
-   return i + len(sub) if i >= 0 else i
-
-def lcut(string_, sub, include=False):
-   i = string_.find(sub) if include else find_end(string_, sub)
-   return string_[i :] if i >= 0 else string_
-
-def rcut(string_, sub, include=False):
-   i = find_end(string_, sub) if include else string_.find(sub)
-   return string_[: i] if i>= 0 else string_
-
-# returns everything in string_ between left and right
-def cut(string_, left, right, include=False):
-   return rcut(lcut(string_, left, include), right, include)
-
-# Returns content string, embed object, and whether there was one result
-async def search_catalog(query):
-   url = CATALOG_URL + url_encode(query)
-   async with aiohttp.ClientSession() as session:
-      async with session.get(url) as response:
-         result = await response.text()
-   soup = BeautifulSoup(result, "html5lib")
-   embed = discord.Embed(url=url)
-   embed.title = soup.body.i.get_text(strip=True).split(".")[0] + "!"
-   temp = embed.title.split(" ")[0]
-   if temp == "No": # No matching subjects found
-      return None, None, False
-   num_results = int(temp)
-   if num_results > 1:
-      if soup.body.blockquote.find_all("h3"): # list is reasonably short
-         subjects = [h3.get_text(strip=True)for h3 in soup.body.blockquote.find_all("h3")]
-      else: # list is very long but easy to parse
-         subjects = [a.get_text(strip=True)for a in soup.body.blockquote.dl.find_all("a")]
-      content = cap_at_2000(subjects)
-   else:
-      last_hline = [img for img in soup.find_all("img") if img["alt"] == "______"][-1]
-      temp = "\n".join([str(sibling) for sibling in last_hline.next_siblings])
-      temp = rcut(temp, "<a")
-      temp = rcut(temp, "<p")
-      content = html_to_markdown(temp)
-      embed.title = soup.body.h3.get_text(strip=True)
-      embed.url   = url
-      kwargs = {"when": [], "other_icons": [], "else": ""}
-      kwargs["prereq"]  = cut(soup.body.blockquote.get_text(),  "Prereq: ", "\n")
-      kwargs["units"]   = cut(soup.body.blockquote.get_text(),   "Units: ", "\n")
-      kwargs["lecture"] = cut(soup.body.blockquote.get_text(), "Lecture: ", "\n")
-      alts = [img["alt"] for img in soup.body.blockquote.find_all("img") if not img["alt"] == "______"]
-      for alt in alts:
-         if alt in LEVELS:
-            kwargs["level"] = EMOJIS[alt]
-         elif alt in SEASONS:
-            kwargs["when"].append(alt + " " + EMOJIS[alt])
-         else:
-            kwargs["other_icons"].append(EMOJIS.get(alt, "({})".format(alt)))
-      kwargs["when"] = " and ".join(kwargs["when"])
-      kwargs["other_icons"] = " ".join(kwargs["other_icons"])
-      embed.description = SUBJECT_DETAILS.format(**kwargs)
-   return content, embed, num_results == 1
-
-# Returns content string, embed object, and whether there was one result
-async def search_map(query):
-   q   = url_encode(query)
-   url = MAP_URL + q
-   async with aiohttp.ClientSession() as session:
-      async with session.get(url) as response:
-         result = json.loads(await response.text())
-   if not result: # No results
-      return None, None, 0
-   embed = discord.Embed()
-   embed.url   = "https://whereis.mit.edu/?q=" + q
-   if len(result) > 1:
-      embed.title = "Found {} results for location!".format(len(result))
-      locations = []
-      for j in result:
-         if "bldgnum" in j and "street" in j:
-            locations.append(LOCATION_DETAILS.format(**j))
-         else:
-            locations.append(j["name"])
-      content = cap_at_2000(locations)
-   else:
-      j = result[0]
-      content = ""
-      embed.description = "(`{lat_wgs84},{long_wgs84}`)".format(**j)
-      if "bldgnum" in j and "street" in j:
-         embed.description = "Building {bldgnum}\n{street} ".format(**j) + embed.description
-      embed.title = j["name"]
-      if "bldgimg" in j: embed.set_image(url=j["bldgimg"])
-   return content, embed, len(result) == 1
-
-client = discord.Client()
-
-@client.event
-async def on_message(msg):
-   if msg.author.bot or not msg.content.startswith(MOUSE_PREFIX): return
-   
-   cmd, *args = msg.clean_content[len(MOUSE_PREFIX) :].split(" ")
-   if cmd == "mit":
-      if not args:
-         await msg.channel.send(
-            MOUSE_HELP.format(pre=MOUSE_PREFIX, url=MOUSE_URL))
-         return
-
-      arg = " ".join(args)
-      c = await search_catalog(arg)
-      # exactly one result for subjects
-      if c[2]:
-         await msg.channel.send(c[0], embed=c[1])
-         return
-      m = await search_map(arg)
-      # exactly one result for locations
-      if m[2]:
-         await msg.channel.send("", embed=m[1])
-         return
-      # No results at all
-      if not any(c) and not any(m):
-         await msg.channel.send(MOUSE_NO_RESULTS)
-         return
-      # Send both results
-      if any(c): await msg.channel.send(c[0], embed=c[1])
-      if any(m): await msg.channel.send(m[0], embed=m[1])
+class FinneasJ(discord.Client):
+   async def on_message(self, msg):
+      if msg.author.bot or not msg.content.startswith(MOUSE_PREFIX): return
       
-   # elif cmd == "ixa":
-   #    # Work in progress
-   #    if not args:
-   #       json = GET_QUEUE
-   #    else:
-   #       POST_YT["args"]["args"]["url"] = " ".join(args).strip("<>")
-   #       json = POST_YT
-   #    async with aiohttp.ClientSession() as session:
-   #       async with session.post(os.environ["MUSICAZOO_ENDPOINT"],
-   #                               data=json, headers=HEADERS) as response:
-   #          result = await response.text()
-   #    await msg.channel.send(
-   #       "```\n" + result + "\n```")
+      cmd, *args = msg.clean_content[len(MOUSE_PREFIX) :].split(" ")
+      if cmd in ("mit", "map", "whereis"):
+         async with msg.channel.typing():
+            if not args:
+               await msg.channel.send("Squeak!", embed=MOUSE_HELP)
+               return
 
-@client.event
-async def on_error(event, *args, **kwargs):
-   error = traceback.format_exc()
-   error_channel = client.get_channel(int(os.environ["ERROR_CHANNEL"]))
-   embed = discord.Embed()
-   embed.description = "event: {}\nargs: {}\nkwargs: {}".format(event, args, kwargs)
-   await error_channel.send(
-      "```\n" + error + "\n```", embed=embed)
+            query = " ".join(args) # search query
 
-@client.event
-async def on_ready():
-   print("Logged in.")
+            if cmd == "mit": # search catalog
+               c = await catalog.search(query, style="verbatim")
+               if c.num_results:
+                  await msg.channel.send(c.content, embed=c.embed)
+               else:
+                  await msg.channel.send("I couldn't find any results for that query!")
+               return
+
+            elif cmd in ("map", "whereis"): # search map
+               m = await whereis.search(query)
+               if m.num_results:
+                  await msg.channel.send(m.content, embed=m.embed)
+               else:
+                  await msg.channel.send("I couldn't find any results for that query!")
+               return
+
+   async def on_error(self, event, *args, **kwargs):
+      error = traceback.format_exc()
+      embed = discord.Embed()
+      embed.description = "event: {}\nargs: {}\nkwargs: {}".format(event, args, kwargs)
+      if "ERROR_CHANNEL" not in os.environ:
+         print("Error! :(")
+         print("vvvvvvvvv")
+         print(f"```\n{error}\n```")
+         print(embed.description)
+         print("^^^^^^^^^")
+      else:
+         error_channel = client.get_channel(int(os.environ["ERROR_CHANNEL"]))
+         await error_channel.send("```\n" + error + "\n```", embed=embed)
+
+   async def on_ready(self):
+      print("Logged in.")
 
 if __name__ == "__main__":
+   client = FinneasJ()
    print("Logging in...")
    client.run(os.environ["MOUSE_TOKEN"])
 
