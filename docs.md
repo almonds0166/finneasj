@@ -27,6 +27,14 @@ Note as of 19 May 2021: The prefixed commands above will be replaced with the [s
 |    `/subject all <query>`    | Search the catalog for subjects *with all of the words* in the given query. |
 |      `/whereis <query>`      | Provide a link to whereis.mit.edu that searches for the given query. |
 
+# Environment variables
+
+To run the bot, export the following environment variables:
+
+* `MOUSE_TOKEN`: the bot token
+* `MOUSE_PREFIX`: the bot prefix
+* `ERROR_CHANNEL` (optional): ID of the channel to send error messages to
+
 # How it works
 
 ## Catalog search
